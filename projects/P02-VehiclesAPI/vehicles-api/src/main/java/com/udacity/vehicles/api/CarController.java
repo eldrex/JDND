@@ -108,7 +108,6 @@ class CarController {
      */
     @PutMapping("/{id}")
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "New vehicle inserted."),
             @ApiResponse(code = 404, message = "Could not find vehicle. Unknown id.")
     })
     ResponseEntity<?> put(@PathVariable Long id, @Valid @RequestBody Car car) {
