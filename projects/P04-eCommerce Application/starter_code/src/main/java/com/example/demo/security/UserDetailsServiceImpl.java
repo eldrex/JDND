@@ -1,6 +1,7 @@
 package com.example.demo.security;
 
 import com.example.demo.model.persistence.repositories.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -11,11 +12,9 @@ import static java.util.Collections.emptyList;
 
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
-    private UserRepository applicationUserRepository;
 
-    public UserDetailsServiceImpl(UserRepository applicationUserRepository) {
-        this.applicationUserRepository = applicationUserRepository;
-    }
+    @Autowired
+    private UserRepository applicationUserRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -23,6 +22,10 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         if (applicationUser == null) {
             throw new UsernameNotFoundException(username);
         }
-        return new User(applicationUser.getUsername(), applicationUser.getPassword(), emptyList());
+        return new org.springframework.security.core.userdetails.User(
+                applicationUser.getUsername(),
+                applicationUser.getPassword(),
+                emptyList()
+        );
     }
 }

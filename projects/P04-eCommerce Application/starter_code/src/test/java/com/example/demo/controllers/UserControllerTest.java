@@ -5,6 +5,7 @@ import com.example.demo.model.persistence.User;
 import com.example.demo.model.persistence.repositories.CartRepository;
 import com.example.demo.model.persistence.repositories.UserRepository;
 import com.example.demo.model.requests.CreateUserRequest;
+import org.apache.catalina.connector.Response;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.http.ResponseEntity;
@@ -47,7 +48,7 @@ public class UserControllerTest {
         final ResponseEntity<User> response = userController.createUser(r);
 
         assertNotNull(response);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(Response.SC_OK, response.getStatusCodeValue());
 
         User u = response.getBody();
 
@@ -56,6 +57,36 @@ public class UserControllerTest {
         assertEquals("test", u.getUsername());
         assertEquals("hashed", u.getPassword());
 
+    }
+
+    @Test
+    public void create_user_passwords_does_not_match() {
+        when(encoder.encode("testPwd")).thenReturn("hashed");
+
+        CreateUserRequest r = new CreateUserRequest();
+        r.setUsername("test");
+        r.setPassword("testPwd");
+        r.setConfirmPassword("testPwd1");
+
+        final ResponseEntity<User> response = userController.createUser(r);
+
+        assertNotNull(response);
+        assertEquals(Response.SC_BAD_REQUEST, response.getStatusCodeValue());
+    }
+
+    @Test
+    public void create_user_passwords_does_not_match_length_constrain() {
+        when(encoder.encode("testPwd")).thenReturn("hashed");
+
+        CreateUserRequest r = new CreateUserRequest();
+        r.setUsername("test");
+        r.setPassword("short");
+        r.setConfirmPassword("short");
+
+        final ResponseEntity<User> response = userController.createUser(r);
+
+        assertNotNull(response);
+        assertEquals(Response.SC_BAD_REQUEST, response.getStatusCodeValue());
     }
 
     @Test

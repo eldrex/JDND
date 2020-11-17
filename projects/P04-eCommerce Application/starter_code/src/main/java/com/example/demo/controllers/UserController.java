@@ -2,6 +2,8 @@ package com.example.demo.controllers;
 
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,40 +24,54 @@ import com.example.demo.model.requests.CreateUserRequest;
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
-	
-	@Autowired
-	private UserRepository userRepository;
-	
-	@Autowired
-	private CartRepository cartRepository;
 
-	@Autowired
-	private BCryptPasswordEncoder bCrypt;
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
-	@GetMapping("/id/{id}")
-	public ResponseEntity<User> findById(@PathVariable Long id) {
-		return ResponseEntity.of(userRepository.findById(id));
-	}
-	
-	@GetMapping("/{username}")
-	public ResponseEntity<User> findByUserName(@PathVariable String username) {
-		User user = userRepository.findByUsername(username);
-		return user == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(user);
-	}
-	
-	@PostMapping("/create")
-	public ResponseEntity<User> createUser(@RequestBody CreateUserRequest createUserRequest) {
-		User user = new User();
-		user.setUsername(createUserRequest.getUsername());
-		Cart cart = new Cart();
-		cartRepository.save(cart);
-		user.setCart(cart);
-		if(createUserRequest.getPassword().length() < 7 || !createUserRequest.getPassword().equals(createUserRequest.getConfirmPassword())){
-			return ResponseEntity.badRequest().build();
-		}
-		user.setPassword(bCrypt.encode(createUserRequest.getPassword()));
-		userRepository.save(user);
-		return ResponseEntity.ok(user);
-	}
-	
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private CartRepository cartRepository;
+
+    @Autowired
+    private BCryptPasswordEncoder bCrypt;
+
+    @GetMapping("/id/{id}")
+    public ResponseEntity<User> findById(@PathVariable Long id) {
+        logger.info("Method findById called with id: {}", id);
+        return ResponseEntity.of(userRepository.findById(id));
+    }
+
+    @GetMapping("/{username}")
+    public ResponseEntity<User> findByUserName(@PathVariable String username) {
+        logger.info("Method findByUserName called with username: {}", username);
+        User user = userRepository.findByUsername(username);
+        return user == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(user);
+    }
+
+    @PostMapping("/create")
+    public ResponseEntity<User> createUser(@RequestBody CreateUserRequest createUserRequest) {
+        User user = new User();
+        user.setUsername(createUserRequest.getUsername());
+        Cart cart = new Cart();
+        cartRepository.save(cart);
+        user.setCart(cart);
+
+        logger.debug("Method createUser called with username: {} ", createUserRequest.getUsername());
+
+        if (createUserRequest.getPassword().length() < 7) {
+            logger.error("Invalid password length. Allowed length less than {} actual {}", 7, createUserRequest.getPassword().length());
+            return ResponseEntity.badRequest().build();
+        }
+        if (!createUserRequest.getPassword().equals(createUserRequest.getConfirmPassword())) {
+            logger.error("Passwords does not match");
+            return ResponseEntity.badRequest().build();
+        }
+        user.setPassword(bCrypt.encode(createUserRequest.getPassword()));
+        userRepository.save(user);
+
+        logger.info("User successfully created");
+        return ResponseEntity.ok(user);
+    }
+
 }
